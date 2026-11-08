@@ -22,15 +22,34 @@ question ──► agent loop (search_code · read_file · find_references · go
 ## Quickstart
 ```bash
 pip install -r requirements.txt
-ollama pull qwen2.5-coder:7b && ollama pull nomic-embed-text
+ollama pull qwen2.5-coder:7b && ollama pull nomic-embed-text   # only for the model-backed commands
 
 python -m codecompass.cli index  /path/to/repo
-python -m codecompass.cli search /path/to/repo "where is auth handled" --mode hybrid+graph
 python -m codecompass.cli ask    /path/to/repo "what breaks if I change hash_password?"
+python -m codecompass.cli chat   /path/to/repo      # follow-up questions are remembered
 
-uvicorn codecompass.api:app --port 8000      # GET /ask streams agent steps as SSE
+uvicorn codecompass.api:app --port 8000             # then open http://localhost:8000 for the chat window
 ```
-Without Ollama, indexing and keyword search still work (embeddings are skipped).
+
+## Commands
+| Command | What it does | Needs Ollama |
+|---|---|---|
+| `index` | build or update the index | no (embeddings need it) |
+| `stats` | files, chunks, languages | no |
+| `search <query>` | ranked code locations (`--mode bm25\|vector\|hybrid\|hybrid+graph`) | no |
+| `find-def <symbol>` | where a function or class is defined | no |
+| `callers <symbol>` | what calls it | no |
+| `ask <question>` | agent answers with verified citations | yes |
+| `explain <file>` | plain-English summary of a file | yes |
+| `impact <symbol>` | what could break if you change it | yes |
+| `onboard` | architecture overview and "read these files first" | yes |
+| `chat` | interactive loop with memory of earlier questions | yes |
+| `about` | version and author | no |
+
+The web chat window (`codecompass/static/chat.html`, served at `/`) streams each agent step and marks
+every citation with a tick or a cross.
+
+Without Ollama, indexing, keyword search, `stats`, `find-def` and `callers` still work.
 
 ## Design notes
 - **Chunking:** Python via `ast` (functions, methods, class headers, module code); other
@@ -70,7 +89,7 @@ Built and unit-tested offline. **Not yet exercised against a live Ollama model o
 server**, so expect to tune the prompt for your model.
 - [ ] tree-sitter chunking + real symbol resolution for JS/TS/Java/Go
 - [ ] cross-encoder reranker, LLM-judged answer correctness in the eval
-- [ ] Next.js UI consuming the SSE stream (animated agent steps and code graph)
+- [ ] Next.js UI with animated agent steps and code graph (a plain HTML chat window ships today)
 - [ ] `run_tests` tool, git blame/log tools, change-impact mode
 
 ## Credits and license

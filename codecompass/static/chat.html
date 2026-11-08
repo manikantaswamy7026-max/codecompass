@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CodeCompass Chat</title>
+<style>
+:root{--bg:#f6f7fb;--fg:#12141c;--mut:#5b6278;--card:#fff;--bd:#e2e5ef;--ac:#5b5bf0;--ok:#0d9488;--bad:#dc2626}
+@media(prefers-color-scheme:dark){:root{--bg:#0b0d14;--fg:#eceef6;--mut:#9aa2bd;--card:#131726;--bd:#242a40;--ac:#8b8bff;--ok:#2dd4bf;--bad:#f87171}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;display:flex;flex-direction:column;height:100vh}
+header{padding:12px 16px;border-bottom:1px solid var(--bd);display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+header b{margin-right:8px}
+input{flex:1;min-width:160px;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;background:var(--card);color:var(--fg);font:inherit}
+button{padding:9px 16px;border:0;border-radius:10px;background:var(--ac);color:#fff;font:inherit;font-weight:600;cursor:pointer}
+button:disabled{opacity:.5;cursor:wait}
+#log{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;max-width:860px;width:100%;margin:0 auto}
+.msg{padding:12px 14px;border-radius:14px;border:1px solid var(--bd);background:var(--card);white-space:pre-wrap;line-height:1.5;animation:in .3s ease}
+.me{align-self:flex-end;background:var(--ac);color:#fff;border-color:transparent;max-width:80%}
+.step{font:13px ui-monospace,Menlo,monospace;color:var(--mut);padding:6px 10px;border-left:3px solid var(--ac)}
+.ok{color:var(--ok)}.bad{color:var(--bad)}.note{color:var(--mut);font-size:13px}
+@keyframes in{from{opacity:0;transform:translateY(8px)}}
+form{display:flex;gap:8px;padding:12px 16px;border-top:1px solid var(--bd);max-width:860px;width:100%;margin:0 auto}
+</style>
+</head>
+<body>
+<header><b>CodeCompass</b><input id="root" placeholder="Path of repo to index, e.g. C:\code\myproject"><button id="idx">Index repo</button></header>
+<div id="log"><div class="note">Index a repository first, then ask questions. Follow-up questions are remembered. Every file:line in an answer is marked &#10004; if the agent really read it and &#10008; if not.</div></div>
+<form id="f"><input id="q" placeholder="Ask about the code..." autocomplete="off"><button id="send">Ask</button></form>
+<script>
+const $=id=>document.getElementById(id),log=$("log");let history=[],busy=false;
+function add(cls,text){const d=document.createElement("div");d.className=cls;d.textContent=text;log.appendChild(d);log.scrollTop=log.scrollHeight;return d}
+$("idx").onclick=async()=>{
+  const root=$("root").value.trim();if(!root)return;
+  $("idx").disabled=true;const n=add("note","Indexing...");
+  try{const r=await fetch("/index",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({root})});
+    const j=await r.json();n.textContent=r.ok?"Indexed "+j.files+" files, "+j.chunks+" chunks"+(j.vectors?" (with embeddings)":" (keyword search only)"):"Error: "+(j.detail||r.status)}
+  catch(e){n.textContent="Could not reach the server: "+e}
+  $("idx").disabled=false};
+$("f").onsubmit=e=>{
+  e.preventDefault();const q=$("q").value.trim(),root=$("root").value.trim();
+  if(!q||!root||busy)return;busy=true;$("send").disabled=true;$("q").value="";add("msg me",q);
+  const es=new EventSource("/ask?root="+encodeURIComponent(root)+"&q="+encodeURIComponent(q)+"&history="+encodeURIComponent(JSON.stringify(history)));
+  const done=()=>{es.close();busy=false;$("send").disabled=false};
+  es.onmessage=m=>{const ev=JSON.parse(m.data);
+    if(ev.type==="step")add("step","step "+ev.step+": "+ev.tool+"("+JSON.stringify(ev.args)+")");
+    else if(ev.type==="answer"){const d=add("msg",ev.text);
+      ev.citations.forEach(c=>{const s=document.createElement("div");s.className=c.verified?"ok":"bad";s.textContent=(c.verified?"\u2714 ":"\u2718 ")+c.cite;d.appendChild(s)});
+      history.push([q,ev.text]);done()}
+    else{add("msg bad","Error: "+(ev.message||"unknown"));done()}};
+  es.onerror=()=>{if(busy){add("msg bad","Connection lost. Is the server running and the repo indexed?");done()}};
+};
+</script>
+</body>
+</html>

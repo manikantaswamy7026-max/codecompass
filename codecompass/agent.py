@@ -64,10 +64,14 @@ def verify_citations(answer: str, box: ToolBox) -> list:
     return out
 
 
-def run_agent(question: str, index: CodeIndex, llm, max_steps: int = None):
+def run_agent(question: str, index: CodeIndex, llm, max_steps: int = None, history=None):
     max_steps = max_steps or SETTINGS.max_steps
     box = ToolBox(index)
-    msgs = [{"role": "system", "content": SYSTEM}, {"role": "user", "content": question}]
+    msgs = [{"role": "system", "content": SYSTEM}]
+    for q, a in (history or [])[-4:]:  # short memory of earlier turns, in the JSON protocol
+        msgs += [{"role": "user", "content": q},
+                 {"role": "assistant", "content": json.dumps({"final": a[:1500]})}]
+    msgs.append({"role": "user", "content": question})
     bad = 0
     for step in range(1, max_steps + 1):
         reply = llm.chat(msgs)
@@ -99,8 +103,8 @@ def run_agent(question: str, index: CodeIndex, llm, max_steps: int = None):
     yield {"type": "answer", "text": ans, "citations": verify_citations(ans, box), "steps": max_steps}
 
 
-def ask(question: str, index: CodeIndex, llm, max_steps: int = None) -> dict:
+def ask(question: str, index: CodeIndex, llm, max_steps: int = None, history=None) -> dict:
     last = None
-    for ev in run_agent(question, index, llm, max_steps):
+    for ev in run_agent(question, index, llm, max_steps, history):
         last = ev
     return last

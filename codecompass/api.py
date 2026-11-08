@@ -5,10 +5,11 @@ Run:  uvicorn codecompass.api:app --reload --port 8000
 from __future__ import annotations
 
 import json
+import os
 
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel
 
 from .agent import run_agent
@@ -27,6 +28,11 @@ class IndexReq(BaseModel):
     root: str
 
 
+@app.get("/")
+def chat_ui():
+    return FileResponse(os.path.join(os.path.dirname(__file__), "static", "chat.html"))
+
+
 @app.get("/health")
 def health():
     return {"ok": True, "ollama": llm.available(), "indexed": list(INDEXES)}
@@ -42,7 +48,6 @@ def build_index(req: IndexReq):
 
 
 def _get(root: str) -> CodeIndex:
-    import os
     key = os.path.abspath(root)
     if key not in INDEXES:
         raise HTTPException(404, "Index this root first with POST /index")
@@ -59,12 +64,16 @@ def search_ep(root: str, q: str, k: int = 8, mode: str = "hybrid+graph"):
 
 
 @app.get("/ask")
-def ask_ep(root: str, q: str):
+def ask_ep(root: str, q: str, history: str = "[]"):
     idx = _get(root)
+    try:
+        hist = [(str(h[0]), str(h[1])) for h in json.loads(history)][-4:]
+    except Exception:
+        hist = []
 
     def stream():
         try:
-            for ev in run_agent(q, idx, llm):
+            for ev in run_agent(q, idx, llm, history=hist):
                 yield f"data: {json.dumps(ev)}\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'type': 'error', 'message': str(e)})}\n\n"
