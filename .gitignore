@@ -1,0 +1,4 @@
+__pycache__/
+.codecompass/
+eval/results.json
+.venv/
