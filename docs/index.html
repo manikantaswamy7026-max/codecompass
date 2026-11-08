@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>CodeCompass – Agentic RAG Copilot for Any Codebase</title>
+<style>
+:root{--bg:#f6f7fb;--fg:#12141c;--mut:#5b6278;--card:#ffffff;--bd:#e2e5ef;--ac:#5b5bf0;--ac2:#0d9488;--gl:rgba(91,91,240,.14);color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d14;--fg:#eceef6;--mut:#9aa2bd;--card:#131726;--bd:#242a40;--ac:#8b8bff;--ac2:#2dd4bf;--gl:rgba(139,139,255,.18);color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0d14;--fg:#eceef6;--mut:#9aa2bd;--card:#131726;--bd:#242a40;--ac:#8b8bff;--ac2:#2dd4bf;--gl:rgba(139,139,255,.18);color-scheme:dark}
+html{scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:Inter,system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.55;overflow-x:hidden}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace}
+.hero{position:relative;padding:72px 0 48px;text-align:center}
+.hero::before{content:"";position:absolute;inset:-20% -10% auto;height:420px;background:radial-gradient(closest-side,var(--gl),transparent);animation:float 9s ease-in-out infinite;z-index:-1}
+@keyframes float{50%{transform:translateY(24px) scale(1.06)}}
+.badge{display:inline-block;padding:5px 14px;border:1px solid var(--bd);border-radius:99px;font-size:13px;color:var(--mut);background:var(--card)}
+h1{font-size:clamp(34px,7vw,64px);line-height:1.05;margin:18px 0 14px;letter-spacing:-.02em}
+.grad{background:linear-gradient(90deg,var(--ac),var(--ac2),var(--ac));background-size:200% auto;-webkit-background-clip:text;background-clip:text;color:transparent;animation:sh 5s linear infinite}
+@keyframes sh{to{background-position:200% center}}
+.sub{max-width:640px;margin:0 auto;color:var(--mut);font-size:18px}
+h2{font-size:28px;margin:0 0 6px}
+section{padding:40px 0}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;padding:20px}
+.grid{display:grid;gap:16px}
+.demo{grid-template-columns:1fr 1fr}
+@media(max-width:820px){.demo{grid-template-columns:1fr}}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+.chip{border:1px solid var(--bd);background:var(--bg);color:var(--fg);border-radius:99px;padding:8px 14px;font:inherit;font-size:14px;cursor:pointer;transition:.2s}
+.chip:hover,.chip.on{border-color:var(--ac);background:var(--gl)}
+.run{background:var(--ac);color:#fff;border:0;border-radius:12px;padding:11px 20px;font:inherit;font-weight:600;cursor:pointer;transition:transform .15s}
+.run:hover{transform:translateY(-2px)}.run:disabled{opacity:.55;cursor:wait}
+#steps{margin-top:14px;display:flex;flex-direction:column;gap:8px;min-height:60px}
+.st{display:flex;gap:10px;align-items:flex-start;padding:9px 12px;border:1px solid var(--bd);border-radius:10px;font-size:13.5px;animation:pop .4s ease both}
+@keyframes pop{from{opacity:0;transform:translateX(-14px)}}
+.tool{color:var(--ac);font-weight:600;white-space:nowrap}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--ac2);margin-top:7px;flex:none;animation:pulse 1.2s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 6px transparent;box-shadow:0 0 0 6px var(--gl)}}
+#ans{margin-top:12px;font-size:14.5px;min-height:20px}
+#ans b{color:var(--ac2)}
+canvas{width:100%;height:340px;display:block}
+.cap{font-size:12px;color:var(--mut);margin-top:6px}
+.pipe{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+.pipe .card{transition:transform .25s,border-color .25s}
+.pipe .card:hover{transform:translateY(-6px);border-color:var(--ac)}
+.n{font-size:12px;color:var(--ac2);font-weight:700;letter-spacing:.08em}
+.pipe h3{margin:6px 0;font-size:17px}.pipe p{margin:0;color:var(--mut);font-size:14px}
+.bar{margin:14px 0}.bar span{display:flex;justify-content:space-between;font-size:14px;margin-bottom:6px}
+.bar i{display:block;height:12px;border-radius:99px;background:var(--bd);overflow:hidden}
+.bar i b{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,var(--ac),var(--ac2));transition:width 1.4s cubic-bezier(.2,.8,.2,1)}
+.tags{display:flex;flex-wrap:wrap;gap:8px}.tags span{padding:7px 13px;border:1px solid var(--bd);border-radius:10px;font-size:13px;background:var(--card)}
+.rv{opacity:0;transform:translateY(28px);transition:opacity .7s,transform .7s}.rv.in{opacity:1;transform:none}
+footer{padding:30px 0 50px;text-align:center;color:var(--mut);font-size:13px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rv{opacity:1;transform:none}}
+</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+<span class="badge">Agentic RAG · Code graph · Local-first</span>
+<h1>Ask your codebase<br><span class="grad">anything. With proof.</span></h1>
+<p class="sub">CodeCompass plans, searches, follows references across files and answers with file and line citations, running on a 7B local model.</p>
+</div></header>
+
+<main class="wrap">
+<section class="rv">
+<h2>Live agent demo</h2>
+<p class="cap" style="margin:0 0 14px">Simulated run on a sample repo. Pick a question and watch the agent work.</p>
+<div class="grid demo">
+<div class="card">
+<div class="chips" id="chips"></div>
+<button class="run" id="run">Run agent ▶</button>
+<div id="steps"></div>
+<div id="ans"></div>
+</div>
+<div class="card"><canvas id="cv"></canvas><div class="cap">Code graph: nodes light up as the agent retrieves them.</div></div>
+</div>
+</section>
+
+<section class="rv">
+<h2>How it works</h2><p class="cap" style="margin:0 0 14px">Six stages from raw repo to cited answer.</p>
+<div class="grid pipe">
+<div class="card"><div class="n">01</div><h3>Syntax-aware chunking</h3><p>Tree-sitter splits code at function and class boundaries, not by character count.</p></div>
+<div class="card"><div class="n">02</div><h3>Hybrid retrieval</h3><p>BM25 for exact identifiers plus code embeddings, merged with reciprocal rank fusion.</p></div>
+<div class="card"><div class="n">03</div><h3>Code graph</h3><p>Calls, imports and references let the agent hop from a function to its callers.</p></div>
+<div class="card"><div class="n">04</div><h3>Agent loop</h3><p>LangGraph state machine with search, read, references and test tools, plus a step cap.</p></div>
+<div class="card"><div class="n">05</div><h3>Incremental index</h3><p>File hashes and git hooks re-index only what changed.</p></div>
+<div class="card"><div class="n">06</div><h3>Eval harness</h3><p>Question set with known answers scores retrieval, correctness and citations.</p></div>
+</div>
+</section>
+
+<section class="rv" id="bench">
+<h2>Benchmark plan</h2>
+<p class="cap" style="margin:0 0 6px">Placeholder targets to beat, not measured results. Replace them with numbers from your own eval run.</p>
+<div class="card">
+<div class="bar"><span><em>Naive vector RAG (baseline)</em><b data-v="40">40%</b></span><i><b data-w="40"></b></i></div>
+<div class="bar"><span><em>Hybrid BM25 + embeddings</em><b data-v="62">62%</b></span><i><b data-w="62"></b></i></div>
+<div class="bar"><span><em>Hybrid + code graph + agent loop</em><b data-v="80">80%</b></span><i><b data-w="80"></b></i></div>
+</div>
+</section>
+
+<section class="rv">
+<h2>Production stack</h2>
+<div class="tags"><span>Python</span><span>tree-sitter</span><span>FastAPI</span><span>LangGraph</span><span>Qdrant</span><span>rank_bm25</span><span>Ollama</span><span>Next.js</span><span>Framer Motion</span><span>Docker</span></div>
+</section>
+</main>
+<footer>CodeCompass · portfolio project · demo UI uses simulated data</footer>
+
+<script>
+const N=[{n:"api/routes.py",x:.5,y:.12},{n:"auth/login.py",x:.18,y:.4},{n:"auth/token.py",x:.5,y:.46},{n:"utils/crypto.py",x:.82,y:.4},{n:"models/user.py",x:.28,y:.74},{n:"db/session.py",x:.74,y:.74},{n:"tests/test_auth.py",x:.5,y:.93}];
+const E=[[0,1],[0,2],[1,2],[1,3],[1,4],[4,5],[0,5],[6,1],[6,3]];
+const Q=[
+{q:"Where is authentication handled?",hit:[0,1,2],steps:[["plan","Identify auth entry points and token logic"],["search_code","“authenticate login token” → 3 candidates"],["find_references","verify_token → called from api/routes.py"],["read_file","auth/login.py:12–48"]],a:"Authentication lives in <b>auth/login.py:12–48</b>. It issues tokens via <b>auth/token.py:20</b>, and every protected route verifies them in <b>api/routes.py:31</b>."},
+{q:"What breaks if I change hash_password?",hit:[3,1,4,6],steps:[["plan","Find the definition, then all callers and tests"],["go_to_definition","hash_password → utils/crypto.py:8"],["find_references","2 callers: auth/login.py, models/user.py"],["run_tests","tests/test_auth.py covers 1 of 2 callers"]],a:"<b>hash_password</b> (utils/crypto.py:8) is used by <b>auth/login.py:27</b> and <b>models/user.py:15</b>. Only the login path is tested, so cover the model path before changing it."},
+{q:"How does a request reach the database?",hit:[0,5,4],steps:[["plan","Trace route → session → model"],["search_code","“session query” → db/session.py"],["read_file","api/routes.py:18–40"],["find_references","get_session → used by models/user.py"]],a:"Routes in <b>api/routes.py:18</b> open a scoped session from <b>db/session.py:10</b>, which the <b>models/user.py</b> queries use."}];
+let cur=0,hl=new Set(),lit={};
+const $=id=>document.getElementById(id);
+const chips=$("chips");
+Q.forEach((o,i)=>{const b=document.createElement("button");b.className="chip"+(i?"":" on");b.textContent=o.q;b.onclick=()=>{cur=i;[...chips.children].forEach((c,j)=>c.classList.toggle("on",j==i));reset()};chips.appendChild(b)});
+function reset(){$("steps").innerHTML="";$("ans").innerHTML="";hl=new Set();lit={}}
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+$("run").onclick=async()=>{
+  const b=$("run");b.disabled=true;reset();const o=Q[cur];
+  for(let i=0;i<o.steps.length;i++){
+    const d=document.createElement("div");d.className="st";
+    d.innerHTML='<span class="dot"></span><span><span class="tool mono">'+o.steps[i][0]+'</span> '+o.steps[i][1]+'</span>';
+    $("steps").appendChild(d);
+    const k=o.hit[Math.min(i,o.hit.length-1)];hl.add(k);lit[k]=performance.now();
+    await sleep(900);d.querySelector(".dot").style.animation="none";
+  }
+  o.hit.forEach(k=>{hl.add(k);lit[k]=performance.now()});
+  const el=$("ans");const tmp=document.createElement("div");tmp.innerHTML=o.a;const txt=o.a;
+  let i=0,out="",inTag=false;
+  while(i<txt.length){const c=txt[i];if(c=="<")inTag=true;out+=c;if(c==">")inTag=false;i++;if(!inTag){el.innerHTML=out;await sleep(12)}}
+  el.innerHTML=txt;b.disabled=false;
+};
+const cv=$("cv"),cx=cv.getContext("2d");let W,H,dpr;
+function size(){dpr=window.devicePixelRatio||1;W=cv.clientWidth;H=cv.clientHeight;cv.width=W*dpr;cv.height=H*dpr;cx.setTransform(dpr,0,0,dpr,0,0)}
+size();addEventListener("resize",size);
+function draw(t){
+  const cs=getComputedStyle(document.documentElement),ac=cs.getPropertyValue("--ac").trim(),ac2=cs.getPropertyValue("--ac2").trim(),bd=cs.getPropertyValue("--bd").trim(),fg=cs.getPropertyValue("--fg").trim(),mut=cs.getPropertyValue("--mut").trim();
+  cx.clearRect(0,0,W,H);
+  const P=N.map((o,i)=>({x:o.x*W+Math.sin(t/900+i*2)*5,y:o.y*H+Math.cos(t/1100+i*3)*5}));
+  E.forEach(([a,b])=>{const on=hl.has(a)&&hl.has(b);cx.strokeStyle=on?ac2:bd;cx.lineWidth=on?2.5:1;cx.beginPath();cx.moveTo(P[a].x,P[a].y);cx.lineTo(P[b].x,P[b].y);cx.stroke();
+    if(on){const f=(t/700)%1;cx.fillStyle=ac2;cx.beginPath();cx.arc(P[a].x+(P[b].x-P[a].x)*f,P[a].y+(P[b].y-P[a].y)*f,3.5,0,7);cx.fill()}});
+  P.forEach((p,i)=>{const on=hl.has(i);const age=on?Math.min((t-lit[i])/500,1):0;
+    if(on){cx.fillStyle=ac;cx.globalAlpha=.25*(1-age)+.12;cx.beginPath();cx.arc(p.x,p.y,10+22*age,0,7);cx.fill();cx.globalAlpha=1}
+    cx.fillStyle=on?ac:bd;cx.beginPath();cx.arc(p.x,p.y,on?9:7,0,7);cx.fill();
+    cx.font="12px ui-monospace,Menlo,monospace";cx.textAlign="center";cx.fillStyle=on?fg:mut;cx.fillText(N[i].n,p.x,p.y+(p.y<H/2?-16:24))});
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");e.target.querySelectorAll("[data-w]").forEach(b=>b.style.width=b.dataset.w+"%");io.unobserve(e.target)}}),{threshold:.15});
+document.querySelectorAll(".rv").forEach(el=>io.observe(el));
+</script>
+</body>
+</html>

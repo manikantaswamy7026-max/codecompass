@@ -1,0 +1,12 @@
+{"q": "Where does the code split Python files into functions and classes?", "expect_files": ["codecompass/chunker.py"], "expect_symbols": ["chunk_python"]}
+{"q": "How is BM25 scoring implemented?", "expect_files": ["codecompass/index.py"], "expect_symbols": ["BM25"]}
+{"q": "How are search results from keyword and vector search combined?", "expect_files": ["codecompass/retrieve.py"], "expect_symbols": ["search"]}
+{"q": "Where are citations in the final answer checked against what the agent read?", "expect_files": ["codecompass/agent.py"], "expect_symbols": ["verify_citations"]}
+{"q": "How does the agent parse the model reply into a tool call?", "expect_files": ["codecompass/agent.py"], "expect_symbols": ["extract_json", "run_agent"]}
+{"q": "How does incremental re-indexing skip unchanged files?", "expect_files": ["codecompass/index.py"], "expect_symbols": ["build"]}
+{"q": "Where is the call graph expansion of search hits?", "expect_files": ["codecompass/retrieve.py"], "expect_symbols": ["_expand"]}
+{"q": "How do I read a file safely without escaping the repo root?", "expect_files": ["codecompass/tools.py"], "expect_symbols": ["t_read_file"]}
+{"q": "Which endpoint streams agent steps to the browser?", "expect_files": ["codecompass/api.py"], "expect_symbols": ["ask_ep"]}
+{"q": "How are embeddings requested from the local Ollama server?", "expect_files": ["codecompass/llm.py"], "expect_symbols": ["embed"]}
+{"q": "How are camelCase and snake_case identifiers tokenized?", "expect_files": ["codecompass/index.py"], "expect_symbols": ["tokenize"]}
+{"q": "Where are very long chunks split into smaller pieces?", "expect_files": ["codecompass/chunker.py"], "expect_symbols": ["_split_big"]}

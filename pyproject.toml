@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codecompass"
+version = "0.1.0"
+description = "Agentic RAG copilot for any codebase with verified citations"
+readme = "README.md"
+license = { file = "LICENSE" }
+authors = [{ name = "Manikanta A M" }]
+requires-python = ">=3.10"
+dependencies = ["numpy>=1.26"]
+
+[project.optional-dependencies]
+api = ["fastapi>=0.110", "uvicorn>=0.29", "pydantic>=2"]
+
+[project.scripts]
+codecompass = "codecompass.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/manikantaswamy7026-max/codecompass"
+
+[tool.setuptools]
+packages = ["codecompass"]
